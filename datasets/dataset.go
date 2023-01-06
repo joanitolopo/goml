@@ -3,6 +3,7 @@ package datasets
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/frictionlessdata/tableschema-go/csv"
 	"github.com/frictionlessdata/tableschema-go/schema"
@@ -10,7 +11,7 @@ import (
 )
 
 type Method interface {
-	ReadCSV(limit int) string
+	ReadCSV(row_length int, use_data ...int) (string, []map[string]interface{})
 }
 
 type MethodConfig struct {
@@ -23,7 +24,7 @@ func Config(filepath string) Method {
 	}
 }
 
-func (m MethodConfig) ReadCSV(limit int) string {
+func (m MethodConfig) ReadCSV(row_length int, use_data ...int) (string, []map[string]interface{}) {
 
 	// read dataset
 	tab, err := csv.NewTable(csv.FromFile(m.filepath), csv.LoadHeaders())
@@ -47,14 +48,19 @@ func (m MethodConfig) ReadCSV(limit int) string {
 		log.Fatal("Unable to read the data for "+m.filepath, err)
 	}
 
-	tabel, _ := m.interactive_table(tab.Headers(), columns, limit)
+	// save value with limit, if limit == 0, use all
+	if use_data == nil {
+		use_data = make([]int, 1)
+		use_data[0] = len(columns)
+	}
 
-	return tabel
+	tabel, value := interactive_table(tab.Headers(), columns, row_length, use_data[0])
+
+	return tabel, value
 }
 
-func (m MethodConfig) interactive_table(headers []string, columns [][]string, limit int) (string, []interface{}) {
+func interactive_table(headers []string, columns [][]string, row_length int, use_data int) (string, []map[string]interface{}) {
 	t := table.NewWriter()
-	// t.SetOutputMirror(os.Stdout)
 
 	//converting header []string to a []interface{}
 	head_interface := make([]interface{}, len(headers))
@@ -63,23 +69,43 @@ func (m MethodConfig) interactive_table(headers []string, columns [][]string, li
 	}
 	t.AppendHeader(head_interface)
 
-	var operand []interface{}
+	operand := []map[string]interface{}{}
 	for index, row := range columns {
 		column_ith := make([]interface{}, len(row))
 		for idx, value := range row {
 			column_ith[idx] = value
 		}
-		operand = append(operand, column_ith)
-		t.AppendRow(column_ith)
-		if index == limit {
+
+		// operand = append(operand, column_ith)
+		dict_value := map[string]interface{}{
+			strconv.Itoa(index): column_ith,
+		}
+		operand = append(operand, dict_value)
+
+		if index <= row_length {
+			t.AppendRow(column_ith)
+		}
+
+		if index == use_data {
 			break
 		}
 
 	}
 
-	// t.AppendRow(table)
 	t.AppendSeparator()
-
 	return t.Render(), operand
 
 }
+
+// mp3 := make(map[string]interface{})
+//     for k, v := range mp1 {
+//         if _, ok := mp1[k]; ok {
+//             mp3[k] = v
+//         }
+//     }
+
+//     for k, v := range mp2 {
+//         if _, ok := mp2[k]; ok {
+//             mp3[k] = v
+//         }
+//     }

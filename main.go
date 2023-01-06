@@ -9,7 +9,7 @@ import (
 func main() {
 	// get dataset
 	init := datasets.Config("diabetes.csv")
-	df := init.ReadCSV(15)
-
-	fmt.Println(df)
+	table, value := init.ReadCSV(5, 50)
+	fmt.Println(table)
+	fmt.Println(value)
 }
