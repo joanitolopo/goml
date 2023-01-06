@@ -1,2 +1,2 @@
 # goml
-This is a machine learning package in golang 
+Machine learning package in golang
