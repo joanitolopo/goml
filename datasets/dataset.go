@@ -5,13 +5,14 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/Kunde21/numgo"
 	"github.com/frictionlessdata/tableschema-go/csv"
 	"github.com/frictionlessdata/tableschema-go/schema"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 type Method interface {
-	ReadCSV(row_length int, use_data ...int) (string, []map[string]interface{})
+	ReadCSV(row_length int, use_data ...int) (string, *numgo.Array64)
 }
 
 type MethodConfig struct {
@@ -24,7 +25,7 @@ func Config(filepath string) Method {
 	}
 }
 
-func (m MethodConfig) ReadCSV(row_length int, use_data ...int) (string, []map[string]interface{}) {
+func (m MethodConfig) ReadCSV(row_length int, use_data ...int) (string, *numgo.Array64) {
 
 	// read dataset
 	tab, err := csv.NewTable(csv.FromFile(m.filepath), csv.LoadHeaders())
@@ -59,7 +60,7 @@ func (m MethodConfig) ReadCSV(row_length int, use_data ...int) (string, []map[st
 	return tabel, value
 }
 
-func interactive_table(headers []string, columns [][]string, row_length int, use_data int) (string, []map[string]interface{}) {
+func interactive_table(headers []string, columns [][]string, row_length int, use_data int) (string, *numgo.Array64) {
 	t := table.NewWriter()
 
 	//converting header []string to a []interface{}
@@ -69,18 +70,16 @@ func interactive_table(headers []string, columns [][]string, row_length int, use
 	}
 	t.AppendHeader(head_interface)
 
-	operand := []map[string]interface{}{}
+	operands := []float64{}
 	for index, row := range columns {
 		column_ith := make([]interface{}, len(row))
 		for idx, value := range row {
 			column_ith[idx] = value
-		}
 
-		// operand = append(operand, column_ith)
-		dict_value := map[string]interface{}{
-			strconv.Itoa(index): column_ith,
+			// save the value
+			value2, _ := strconv.ParseFloat(value, 32)
+			operands = append(operands, value2)
 		}
-		operand = append(operand, dict_value)
 
 		if index <= row_length {
 			t.AppendRow(column_ith)
@@ -91,6 +90,7 @@ func interactive_table(headers []string, columns [][]string, row_length int, use
 		}
 
 	}
+	operand := numgo.NewArray64(operands, use_data, len(headers))
 
 	t.AppendSeparator()
 	return t.Render(), operand

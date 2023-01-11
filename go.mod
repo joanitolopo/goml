@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/Kunde21/numgo v0.0.0-20170108025656-b9dc613b1c37 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/satori/go.uuid v1.1.0 // indirect
