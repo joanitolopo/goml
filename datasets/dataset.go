@@ -19,7 +19,7 @@ type MethodConfig struct {
 	filepath string
 }
 
-func Config(filepath string) Method {
+func Load(filepath string) Method {
 	return MethodConfig{
 		filepath: filepath,
 	}
